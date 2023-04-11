@@ -1,4 +1,14 @@
 
+/*
+ * Building the Parser for the Egg programming language
+ *
+ * To parse an expression, we need to use 4 functions:
+ *
+ * 1. skipSpace(string)
+ * 2. parseApply(expr, program)
+ * 3. parseExpression(program)
+ * 4. parse(program)
+ */
 // THE PARSER
 function parseExpression(program) {
     program = skipSpace(program);
@@ -58,6 +68,11 @@ function parse(program) {
 // //    args: [{type: "word", name: "a"},
 // //           {type: "value", value: 10}]}
 
+/* Running the egg program:
+* 1. Evaluator (an Interpreter)
+* 2. Special Forms Object (if, while, define, do, functions)
+* 3. Environment (Scope)
+*/
 
 // THE EVALUATOR
 
@@ -206,13 +221,15 @@ do(define(pow, fun(base, exp,
 `);
 // → 1024
 
+
+
 // EX 1 ARRAYS
 topScope.array = (...values) => values;
 topScope.length = array => array.length;
 topScope.element = (array, n) => array[n];
-// Here, array takes a rest argument and returns an array containing the argument values.
+// Here, array takes a rest argument and returns an array containing the argument values. ex:topscope.array(1,2,3) -> [1,2,3]
 // length takes an array as an argument and returns its length. element takes an array and an index n as arguments and returns the nth element of the array.
-//
+// element : topscope.element([1,2,3],1] -> 2 (the element at index 1)
 // We can then modify the Egg code as follows to use these functions:
 run(`
 do(define(sum, fun(array,
@@ -240,14 +257,17 @@ do(define(f, fun(a, fun(b, +(a, b)))),
 //
 // Here is the modified skipSpace function:
 function skipSpace(string) {
-    let skippable = string.match(/^(\s|#.*)*/);
-    return string.slice(skippable[0].length);
+    let skippable = string.match(/^(\s|#.*)*/); // regula expression to math any whitespace or comment # at the beginning of the string
+    // s - for whitespaces
+    // ^ - the match at the beginning
+    // * - zero or more occurences of the characters in the paratheses.
+    return string.slice(skippable[0].length); // slice to return a substring without the whitespaces and comments
 }
 // This function matches the beginning of the string (^) and then matches any sequence of whitespace or comments (\s|#.*) zero or more times (*).
 // The matched string is then sliced off the input string.
 //
 // With this modification, the parse function will now skip over comments as if they are whitespace.
-// The examples given in the problem should now produce the expected output:
+
 console.log(parse("# hello\nx"));
 // → {type: "word", name: "x"}
 
@@ -261,15 +281,16 @@ console.log(parse("a # one\n   # two\n()"));
 // EX 3 FIXING A SCOPE
 
 specialForms.set = (args, scope) => {
-    if (args.length != 2 || args[0].type != "word") {
+    if (args.length != 2 || args[0].type != "word") { // verify if the args array has 2 elements and the first one is a 'word' type
         throw new SyntaxError("Incorrect use of set");
     }
-    const name = args[0].name;
+    const name = args[0].name; // extract the name of the variable from the first argument of the args array, which should be a 'word' type
     const value = evaluate(args[1], scope);
 
-    // Traverse the scope chain to find the scope containing the binding
+    // Traverse the scope chain to find the scope containing the binding for the variable 'name'
     let currentScope = scope;
-    while (currentScope != null && !Object.prototype.hasOwnProperty.call(currentScope, name)) {
+    while (currentScope != null && !Object.prototype.hasOwnProperty.call(currentScope, name)) { // if the name property doesn't exist in the current scope, it moves to the
+        //parent scope by calling getPrototypeOf currentscope. It continues until either the binding is found or there are no more parent scopes
         currentScope = Object.getPrototypeOf(currentScope);
     }
 
@@ -291,5 +312,5 @@ do(define(x, 4),
 `);
 // → 50
 
-// run(`set(quux, true)`);
+ //run(`set(quux, true)`);
 // // → Some kind of ReferenceError
